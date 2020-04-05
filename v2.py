@@ -129,7 +129,7 @@ class Bot:
             last_key = next(iter(awarded))
             if time.time() - awarded[last_key] > TIME_TO_KEEP:
                 awarded.popitem()
-            deck.update({comment.parent_id: comment.created_utc})
+            awarded.update({comment.parent_id: comment.created_utc})
         json.dump(data, open(BOOK, 'w'), indent=4)
     def start_checking(self):
         print(self.subreddit.display_name)
