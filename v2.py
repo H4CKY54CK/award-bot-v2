@@ -42,7 +42,7 @@ class Bot:
         for user in queue:
             if recent[user].get('created', 0) + COOLDOWN < time.time():
                 try:
-                    comment = self.reddit.comment(queue[user][0])
+                    comment = self.reddit.comment(queue[user][-1])
                 except:
                     continue
                 self.process_comment(comment)
