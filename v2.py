@@ -45,7 +45,11 @@ class Bot:
                     comment = self.reddit.comment(queue[user][-1])
                 except:
                     continue
-                self.process_comment(comment)
+                state = self.check(comment)
+                if isinstance(state, str):
+                    comment.reply(state)
+                else:
+                    self.process_comment(comment)
                 del queue[user][0]
                 recent[user].update({'created': time.time()})
             users.append(user)
