@@ -45,7 +45,7 @@ class Bot:
                     comment = self.reddit.comment(queue[user][-1])
                 except:
                     continue
-                state = self.check(comment)
+                state = self.check(comment, queued=True)
                 if isinstance(state, str):
                     comment.reply(state)
                 else:
@@ -59,7 +59,7 @@ class Bot:
             if time.time() - recent[user].get('created', 0) > TIME_TO_KEEP:
                 del recent[user]
         json.dump(data, open(BOOK, 'w'), indent=4)
-    def check(self, comment):
+    def check(self, comment, queued=False):
         data = json.load(open(BOOK))
         recent = data['recent']
         user = str(comment.author)
@@ -82,6 +82,8 @@ class Bot:
             return BOT_AWARD
         if parent.body == KEYWORD:
             return AWARD_AWARD
+        if queued:
+            return True
         if last + COOLDOWN > comment.created_utc:
             remaining = (last + COOLDOWN) - comment.created_utc
             data = json.load(open(BOOK))
