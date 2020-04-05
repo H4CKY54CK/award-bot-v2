@@ -11,10 +11,13 @@ except:
 from multiprocessing import Process
 from collections import deque
 class Bot:
-    def __init__(self, site):
-        if not os.path.exists(BOOK):
-            data = {'queue': {}, 'recent': {}, 'submissions': []}
-            json.dump(data, open(BOOK, 'w'), indent=4)
+    def __init__(self, site, book=None):
+        if book is not None:
+            self.book = book
+            if not os.path.exists(self.book):
+                self.data = {'queue': {}, 'recent': {}, 'submissions': []}
+                json.dump(self.data, open(self.book, 'w'), indent=4)
+            self.data = json.load(open(self.book))
         self.reddit = praw.Reddit(site)
         self.subreddit = self.reddit.subreddit(SUBREDDIT)
         self.THEBOT = str(self.reddit.user.me())
@@ -35,33 +38,54 @@ class Bot:
                 else:
                     self.process_comment(comment)
     def check_queue(self):
-        data = json.load(open(BOOK))
-        queue = data['queue']
-        recent = data['recent']
+        """Check items in the queue."""
+
+        # load records
+        # set up easy access
+        queue = self.data['queue']
+        recent = self.data['recent']
+        # createempty list to use later (iterating over a list, and trying to modify somthing in the list causes it to skip)
         users = []
+        # iterate over the queue
         for user in queue:
             if recent[user].get('created', 0) + COOLDOWN < time.time():
+                # we have the id
                 try:
+                    # use the id to create an instance of the comment. if it returns a comment, it succeeded. otherwise, it throws an error
                     comment = self.reddit.comment(queue[user][-1])
+                # if it throws an error
                 except:
+                    # continue (by skipping everything from here down (within indentation), basically by moving back up to the top of
+                    # this code block right under the `for` loop)
                     continue
+                # by getting here, we successfully connected to reddit, because we built the comment
                 state = self.check(comment, queued=True)
+                # if my function returns a string, it's because it denied the award, as per our instruction
                 if isinstance(state, str):
+                    # tell them that
                     comment.reply(state)
                 else:
+                    # process it. this is my function, not praw's or reddit's. the only thing that connects to reddit in it, is 
+                    # the reply. praw ALWAYS throws an error if something doesnt go through perfectly (usually. the only time it
+                    # doesn't, is stuff like the finer features)
                     self.process_comment(comment)
+                # we got this far, we must have been doing everything successfully. delete item from user's queue
                 del queue[user][0]
-                recent[user].update({'created': time.time()})
+            # append all users to our users list
             users.append(user)
+        # iterate over our USERS list, not the queue
         for user in users:
+            # if their queue is empty, remove the user
             if len(queue[user]) == 0:
                 del queue[user]
+            # if the user's last award ever is older than the time we designate, delete them from the rest of the records. 
+            # this might be incorrect. i need to double check this, since we're also removing comments as they hit a certain age
+            # elsewhere in the script
             if time.time() - recent[user].get('created', 0) > TIME_TO_KEEP:
                 del recent[user]
-        json.dump(data, open(BOOK, 'w'), indent=4)
+        json.dump(self.data, open(self.book, 'w'), indent=4)
     def check(self, comment, queued=False):
-        data = json.load(open(BOOK))
-        recent = data['recent']
+        recent = self.data['recent']
         user = str(comment.author)
         parent = comment.parent()
         parent_id = comment.parent_id
@@ -86,12 +110,11 @@ class Bot:
             return True
         if last + COOLDOWN > comment.created_utc:
             remaining = (last + COOLDOWN) - comment.created_utc
-            data = json.load(open(BOOK))
-            if user not in data['queue']:
-                data['queue'].update({user: []})
-            queue = data['queue']
+            if user not in self.data['queue']:
+                self.data['queue'].update({user: []})
+            queue = self.data['queue']
             queue[user].append(comment.id)
-            json.dump(data, open(BOOK, 'w'), indent=4)
+            json.dump(self.data, open(self.book, 'w'), indent=4)
             with open(LOGS, 'a') as f:
                 f.write(f"{datetime.datetime.fromtimestamp(time.time())}: {comment.id} entered into queue.\n")
             return QUEUEDOWN + f"{datetime.timedelta(seconds=round(remaining))}"
@@ -124,8 +147,7 @@ class Bot:
         elif len(flair) > 0:
             comment.reply(CUSTOM_FLAIR)
     def add(self, comment):
-        data = json.load(open(BOOK))
-        recent = data['recent']
+        recent = self.data['recent']
         author = str(comment.author)
         if author not in recent.keys():
             recent.update({author:{'created': comment.created_utc, 'awarded': {comment.parent_id: comment.created_utc}}})
@@ -136,19 +158,18 @@ class Bot:
             if time.time() - awarded[last_key] > TIME_TO_KEEP:
                 awarded.popitem()
             awarded.update({comment.parent_id: comment.created_utc})
-        json.dump(data, open(BOOK, 'w'), indent=4)
+        json.dump(self.data, open(self.book, 'w'), indent=4)
     def start_checking(self):
         print(self.subreddit.display_name)
         while True:
-            data = json.load(open(BOOK))
             self.flairs = {}
             valid = r'[a-zA-Z0-9_-]+'
             for submission in self.subreddit.new(limit=None):
                 if submission.created_utc > (time.time() - TIMEFRAME):
                     if submission.score >= KARMA and submission.is_self:
                         author = str(submission.author)
-                        if submission.id not in data['submissions']:
-                            data['submissions'].append(submission.id)
+                        if submission.id not in self.data['submissions']:
+                            self.data['submissions'].append(submission.id)
                             self.process_submission(submission)
                 else:
                     continue
@@ -192,7 +213,7 @@ class Bot:
                 else:
                     old_flair = self.flairs[author]
                     self.subreddit.flair.set(author, new_flair, flair_class)
-                    msg.reply(FLAIR_CHANGED + f" {old_flair} | New: {new_flair}")
+                    msg.reply(FLAIR_CHANGED + f" Old: {old_flair} | New: {new_flair}")
                     msg.mark_read()
                     with open(LOGS, 'a') as f:
                         f.write(f"{datetime.datetime.fromtimestamp(time.time())}: {author} user flair has been changed. Source: inbox. Old flair: {old_flair} | New flair: {new_flair}.\n")
@@ -222,7 +243,8 @@ class Bot:
         elif len(flair) > 0:
             pass
 if __name__ == '__main__':
-    bot1 = Bot(PRIMARY)
+    os.chdir(os.path.abspath(os.path.dirname(__file__)))
+    bot1 = Bot(PRIMARY, 'records.json')
     bot2 = Bot(SECONDARY)
     b1 = Process(target=bot1.start_stream, daemon=True)
     b2 = Process(target=bot2.start_checking, daemon=True)
