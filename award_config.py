@@ -2,8 +2,8 @@
 PRIMARY = ''
 SECONDARY = ''
 # Tests require two valid accounts that are not the award bot.
-TEST1 = ''
-TEST2 = ''
+TEST1 = 'hackysack'
+TEST2 = 'hzazael'
 BOT_NAME = 'misanthropydroid'
 DEBUG_MODE = False
 # Subreddit to run the bot in
