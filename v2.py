@@ -4,7 +4,10 @@ import json
 import praw
 import time
 import datetime
-from award_config import *
+try:
+    from config import *
+except:
+    from award_config import *
 from multiprocessing import Process
 from collections import deque
 class Bot:
