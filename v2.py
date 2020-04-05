@@ -13,7 +13,7 @@ class Bot:
             data = {'queue': {}, 'recent': {}, 'submissions': []}
             json.dump(data, open(BOOK, 'w'), indent=4)
         self.reddit = praw.Reddit(site)
-        self.subreddit = self.reddit.subreddit(self.reddit.config.custom['subreddit'])
+        self.subreddit = self.reddit.subreddit(SUBREDDIT)
         self.THEBOT = str(self.reddit.user.me())
     def start_stream(self):
         counter = 0

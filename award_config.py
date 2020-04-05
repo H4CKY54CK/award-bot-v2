@@ -1,6 +1,8 @@
 # Bot 1 and 2
-PRIMARY = 'mhcp1'
-SECONDARY = 'mhcp2'
+PRIMARY = ''
+SECONDARY = ''
+# Subreddit to run the bot in
+SUBREDDIT = ''
 # Records file
 BOOK = 'records.json'
 # Keyword
