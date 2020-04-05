@@ -52,7 +52,7 @@ class Bot:
         for user in users:
             if len(queue[user]) == 0:
                 del queue[user]
-            if time.time() - recent[user].get('created', 0) > remove_after:
+            if time.time() - recent[user].get('created', 0) > TIME_TO_KEEP:
                 del recent[user]
         json.dump(data, open(BOOK, 'w'), indent=4)
     def check(self, comment):
@@ -88,7 +88,7 @@ class Bot:
             json.dump(data, open(BOOK, 'w'), indent=4)
             with open(LOGS, 'a') as f:
                 f.write(f"{datetime.datetime.fromtimestamp(time.time())}: {comment.id} entered into queue.\n")
-            return QUEUEDOWN + f"{datetime.timedelta(seconds=round(remaining))})"
+            return QUEUEDOWN + f"{datetime.timedelta(seconds=round(remaining))}"
         return True
     def process_comment(self, comment):
         parent = comment.parent()
