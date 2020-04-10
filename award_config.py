@@ -8,8 +8,9 @@ BOT_NAME = 'misanthropydroid'
 DEBUG_MODE = False
 # Subreddit to run the bot in
 SUBREDDIT = 'misanthropytest'
-# Records file
+# Records files
 BOOK = 'records.json'
+SUBMISSIONS = 'submissions.json'
 # Keyword
 KEYWORD = '!award'
 # Cooldown time before comment is entered into the queue
