@@ -18,8 +18,6 @@ class Bot:
                 self.data = {'queue': {}, 'recent': {}, 'submissions': []}
                 json.dump(self.data, open(self.book, 'w'), indent=4)
             self.data = json.load(open(self.book))
-        else:
-            self.data = json.load(open(self.book))
         self.reddit = praw.Reddit(site)
         self.subreddit = self.reddit.subreddit(SUBREDDIT)
         self.THEBOT = str(self.reddit.user.me())
@@ -163,6 +161,10 @@ class Bot:
         json.dump(self.data, open(self.book, 'w'), indent=4)
     def start_checking(self):
         print(self.subreddit.display_name)
+        if not os.path.exists('submissions.json'):
+            data = {'submissions': []}
+            json.dump(data, open('submissions.json', 'w'))
+        data = json.load(open('submission.json'))
         while True:
             self.flairs = {}
             valid = r'[a-zA-Z0-9_-]+'
@@ -170,8 +172,9 @@ class Bot:
                 if submission.created_utc > (time.time() - TIMEFRAME):
                     if submission.score >= KARMA and submission.is_self:
                         author = str(submission.author)
-                        if submission.id not in self.data['submissions']:
-                            self.data['submissions'].append(submission.id)
+                        if submission.id not in data['submissions']:
+                            data['submissions'].append(submission.id)
+                            json.dump(data, open('submissions.json', 'w'), indent=4)
                             self.process_submission(submission)
                 else:
                     continue
