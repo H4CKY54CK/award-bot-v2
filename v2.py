@@ -18,6 +18,8 @@ class Bot:
                 self.data = {'queue': {}, 'recent': {}, 'submissions': []}
                 json.dump(self.data, open(self.book, 'w'), indent=4)
             self.data = json.load(open(self.book))
+        else:
+            self.data = json.load(open(self.book))
         self.reddit = praw.Reddit(site)
         self.subreddit = self.reddit.subreddit(SUBREDDIT)
         self.THEBOT = str(self.reddit.user.me())
