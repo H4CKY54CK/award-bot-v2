@@ -247,25 +247,18 @@ class Bot:
                 f.write(f"{datetime.datetime.fromtimestamp(time.time())}: {author} incremented one level. Source: Submission threshold met. {submission.id}.\n")
         elif len(flair) > 0:
             pass
+
 if __name__ == '__main__':
     os.chdir(os.path.abspath(os.path.dirname(__file__)))
-    bot1 = Bot(PRIMARY, 'records.json')
-    bot2 = Bot(SECONDARY)
-    b1 = Process(target=bot1.start_stream, daemon=True)
-    b2 = Process(target=bot2.start_checking, daemon=True)
+    b1 = Process(target=Bot(PRIMARY, BOOK).start_stream, daemon=True)
+    b2 = Process(target=Bot(SECONDARY, None).start_checking, daemon=True)
     b1.start()
     b2.start()
-    b1.join()
-    b2.join()
     while True:
         if not b1.is_alive():
-            b1 = Process(target=bot1.start_stream)
-            b1.daemon = True
+            b1 = Process(target=Bot(PRIMARY, BOOK).start_stream, daemon=True)
             b1.start()
-            b1.join()
         if not b2.is_alive():
-            b2 = Process(target=bot2.start_checking)
-            b2.daemon = True
+            b2 = Process(target=Bot(SECONDARY, None).start_checking, daemon=True)
             b2.start()
-            b2.join()
-        time.sleep(.1)
+        time.sleep(.5)
