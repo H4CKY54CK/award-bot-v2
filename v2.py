@@ -4,14 +4,18 @@ import json
 import praw
 import time
 import datetime
+from multiprocessing import Process
+# Hassle-free way to import the dev's config, and when the updated bot is pushed, prevent accidental overwriting of user's config
+# Hassle-free for me, anyway
 try:
     from config import *
 except:
     from award_config import *
-from multiprocessing import Process
-from collections import deque
+
 class Bot:
+    'Reddit bot.'
     def __init__(self, site, book=None):
+        'Initial setup.'
         if book is not None:
             self.book = book
             if not os.path.exists(self.book):
@@ -21,7 +25,9 @@ class Bot:
         self.reddit = praw.Reddit(site)
         self.subreddit = self.reddit.subreddit(SUBREDDIT)
         self.THEBOT = str(self.reddit.user.me())
+
     def start_stream(self):
+        'Begin streaming comments from subreddit.'
         counter = 0
         print(self.subreddit.display_name)
         for comment in self.subreddit.stream.comments(skip_existing=True, pause_after=0):
@@ -35,10 +41,15 @@ class Bot:
                 state = self.check(comment)
                 if type(state) == str:
                     comment.reply(state)
+                    comment.refresh()
+                    authors = [str(i.author) for i in comment.replies]
+                    if self.reddit.user.me() in authors:
+                        continue
                 else:
                     self.process_comment(comment)
+
     def check_queue(self):
-        """Check items in the queue."""
+        'Check items in the queue.'
 
         # load records
         # set up easy access
