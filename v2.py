@@ -41,10 +41,11 @@ class Bot:
                 state = self.check(comment)
                 if type(state) == str:
                     comment.reply(state)
-                    comment.refresh()
-                    authors = [str(i.author) for i in comment.replies]
-                    if self.reddit.user.me() in authors:
-                        continue
+                    continue
+                    # comment.refresh()
+                    # authors = [str(i.authors) for i in comment.replies]
+                    # if self.reddit.user.me() in authors:
+                    #     continue
                 else:
                     self.process_comment(comment)
 
