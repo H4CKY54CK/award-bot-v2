@@ -96,30 +96,50 @@ class Bot:
             if time.time() - recent[user].get('created', 0) > TIME_TO_KEEP:
                 del recent[user]
         json.dump(self.data, open(self.book, 'w'), indent=4)
+
     def check(self, comment, queued=False):
+        'Determine if issuer of `!award` is eligible to do so.'
+
+        # A better name would have been `awards`
         recent = self.data['recent']
         user = str(comment.author)
         parent = comment.parent()
-        parent_id = comment.parent_id
+        # Check both sources for this value. First, the fast one. Then, the reliable one.
+        parent_id = comment.parent_id or parent.name
         parent_user = str(parent.author)
+
+        # See if they are in `awards` (`recent`)
         if user in recent.keys():
+            # Each user has an entry in `recent`, called `created`.
+            # THIS should have been named `recent`
             last = recent[user].get('created', 0)
+            # And a dict of `comment id:comment.created_utc` of comments this user has awarded.
             awarded = recent[user].get('awarded', {})
+        # If they aren't, set up some defaults.
         else:
             last = 0
             awarded = {}
+        # Does the parent comment's ID already exist in the dict of what they've already awarded?
         if parent_id in awarded.keys():
             return DUPLICATE
+        # A 'fullname' ID includes a prefix to the normal ID, letting us know what it is
+        # 't3_...' is a submission
         if parent_id.startswith('t3'):
             return POST
+        # Are they commenting on their own comment?
         if user == parent_user:
             return SELF_AWARD
+        # Is the parent comment one made by this bot?
         if parent_user == self.THEBOT:
             return BOT_AWARD
+        # Is this `!award` `!award`ing another `!award`?
         if parent.body == KEYWORD:
             return AWARD_AWARD
+        # If the argument `queued` is True, then return. We don't want to accidentally requeue a queued comment
+        # If it's False, then we can keep going
         if queued:
             return True
+        # If the time of their last comment PLUS however long the cooldown is IS GREATER THAN the time this comment was created,
         if last + COOLDOWN > comment.created_utc:
             remaining = (last + COOLDOWN) - comment.created_utc
             if user not in self.data['queue']:
